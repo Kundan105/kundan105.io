@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kundan Kumar's Personal Webpage</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #33ff33;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            text-align: center;
+            padding: 1em 0;
+            background-color: #1a1a1a;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            padding: 1em;
+            background-color: #262626;
+        }
+        nav a {
+            color: #33ff33;
+            text-decoration: none;
+            margin: 0 1em;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        section {
+            padding: 2em;
+            margin: 1em auto;
+            width: 80%;
+            background-color: #1a1a1a;
+        }
+        footer {
+            text-align: center;
+            padding: 1em 0;
+            background-color: #262626;
+            color: #999;
+        }
+        form {
+            margin-top: 1em;
+        }
+        input[type="text"], input[type="url"], input[type="file"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #262626;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+        }
+        input[type="submit"] {
+            background-color: #33ff33;
+            color: #0d0d0d;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #ff3333;
+            color: #0d0d0d;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        @media (max-width: 768px) {
+            section {
+                width: 90%;
+                padding: 1em;
+            }
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            nav a {
+                margin: 0.5em 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Kundan Kumar's Personal Webpage</h1>
+    </header>
+    <nav>
+        <a href="#about">About Me</a>
+        <a href="#projects">Projects</a>
+        <a href="#blog">Blog</a>
+        <a href="#contact">Contact</a>
+    </nav>
+    <section id="about">
+        <h2>About Me</h2>
+        <p>Made by Kundan Kumar</p>
+    </section>
+    <section id="projects">
+        <h2>Projects</h2>
+        <ul id="project-list"></ul>
+        <form id="project-form">
+            <input type="text" id="project-title" placeholder="Project Title" required>
+            <input type="url" id="project-link" placeholder="Link to File (URL)">
+            <input type="file" id="project-file">
+            <input type="submit" value="Add Project">
+        </form>
+    </section>
+    <section id="blog">
+        <h2>Blog</h2>
+        <ul id="blog-list"></ul>
+        <form id="blog-form">
+            <input type="text" id="blog-title" placeholder="Blog Post Title" required>
+            <input type="url" id="blog-link" placeholder="Link to File (URL)">
+            <input type="file" id="blog-file">
+            <input type="submit" value="Add Blog Post">
+        </form>
+    </section>
+    <section id="contact">
+        <h2>Contact</h2>
+        <p>Email: <a href="mailto:kumarkundan20105@gmail.com">kumarkundan20105@gmail.com</a></p>
+    </section>
+    <footer>
+        <p>&copy; 2024 Kundan Kumar</p>
+    </footer>
+    <script>
+        const REPO_OWNER = 'Kundan105';
+        const REPO_NAME = 'kundan105.io';
+        const ACCESS_TOKEN = 'y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';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
+            loadBlogs();
+        });
+
+        document.getElementById('project-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const title = document.getElementById('project-title').value;
+            const link = document.getElementById('project-link').value;
+            const file = document.getElementById('project-file').files[0];
+            if (file) {
+                uploadFile(file).then(url => {
+                    addProject(title, url);
+                    document.getElementById('project-title').value = '';
+                    document.getElementById('project-link').value = '';
+                    document.getElementById('project-file').value = '';
+                });
+            } else {
+                addProject(title, link);
+            }
+        });
+
+        document.getElementById('blog-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const title = document.getElementById('blog-title').value;
+            const link = document.getElementById('blog-link').value;
+            const file = document.getElementById('blog-file').files[0];
+            if (file) {
+                uploadFile(file).then(url => {
+                    addBlog(title, url);
+                    document.getElementById('blog-title').value = '';
+                    document.getElementById('blog-link').value = '';
+                    document.getElementById('blog-file').value = '';
+                });
+            } else {
+                addBlog(title, link);
+            }
+        });
+
+        function uploadFile(file) {
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+                reader.onload = function() {
+                    const content = reader.result.split(',')[1];
+                    const path = `uploads/${file.name}`;
+                    fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${ACCESS_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Add ${file.name}`,
+                            content: content
+                        })
+                    }).then(response => response.json())
+                      .then(data => resolve(data.content.download_url))
+                      .catch(error => reject(error));
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function addProject(title, link) {
+            const projects = getProjects();
+            projects.push({ title, link });
+            saveProjects(projects).then(() => renderProjects());
+        }
+
+        function addBlog(title, link) {
+            const blogs = getBlogs();
+            blogs.push({ title, link });
+            saveBlogs(blogs).then(() => renderBlogs());
+        }
+
+        function removeProject(index) {
+            const projects = getProjects();
+            projects.splice(index, 1);
+            saveProjects(projects).then(() => renderProjects());
+        }
+
+        function removeBlog(index) {
+            const blogs = getBlogs();
+            blogs.splice(index, 1);
+            saveBlogs(blogs).then(() => renderBlogs());
+        }
+
+        function loadProjects() {
+            fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/projects.json`, {
+                headers: {
+                    'Authorization': `token ${ACCESS_TOKEN}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const projects = JSON.parse(atob(data.content));
+                localStorage.setItem('projects', JSON.stringify(projects));
+                renderProjects();
+            });
+        }
+
+        function loadBlogs() {
+            fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/blogs.json`, {
+                headers: {
+                    'Authorization': `token ${ACCESS_TOKEN}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const blogs = JSON.parse(atob(data.content));
+                localStorage.setItem('blogs', JSON.stringify(blogs));
+                renderBlogs();
+            });
+        }
+
+        function renderProjects() {
+            const projectList = document.getElementById('project-list');
+            projectList.innerHTML = '';
+            const projects = getProjects();
+            projects.forEach((project, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<a href="${project.link}" target="_blank">${project.title}</a>
+                                      <button onclick="removeProject(${index})">Remove</button>`;
+                projectList.appendChild(listItem);
+            });
+        }
+
+        function renderBlogs() {
+            const blogList = document.getElementById('blog-list');
+            blogList.innerHTML = '';
+            const blogs = getBlogs();
+            blogs.forEach((blog, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<a href="${blog.link}" target="_blank">${blog.title}</a>
+                                      <button onclick="removeBlog(${index})">Remove</button>`;
+                blogList.appendChild(listItem);
+            });
+        }
+
+        function getProjects() {
+            const projects = localStorage.getItem('projects');
+            return projects ? JSON.parse(projects) : [];
+        }
+
+        function getBlogs() {
+            const blogs = localStorage.getItem('blogs');
+            return blogs ? JSON.parse(blogs) : [];
+        }
+
+        function saveProjects(projects) {
+            return new Promise((resolve, reject) => {
+                const content = btoa(JSON.stringify(projects));
+                fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/projects.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Update projects.json',
+                        content: content
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      localStorage.setItem('projects', JSON.stringify(projects));
+                      resolve();
+                  })
+                  .catch(error => reject(error));
+            });
+        }
+
+        function saveBlogs(blogs) {
+            return new Promise((resolve, reject) => {
+                const content = btoa(JSON.stringify(blogs));
+                fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/blogs.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Update blogs.json',
+                        content: content
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      localStorage.setItem('blogs', JSON.stringify(blogs));
+                      resolve();
+                  })
+                  .catch(error => reject(error));
+            });
+        }
+    </script>
+</body>
+</html>
